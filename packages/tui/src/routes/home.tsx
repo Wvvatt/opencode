@@ -1,5 +1,7 @@
 import { Prompt, type PromptRef } from "../component/prompt"
-import { createEffect, createMemo, createSignal, onMount } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
+import { captureRouteTransitionOrigin } from "../component/route-transition"
+import type { BoxRenderable } from "@opentui/core"
 import { Logo } from "../component/logo"
 import { useSync } from "../context/sync"
 import { Toast } from "../ui/toast"
@@ -36,10 +38,15 @@ export function Home() {
     return configured ?? 75
   })
   let sent = false
+  let promptBox: BoxRenderable | undefined
 
   onMount(() => {
     editor.clearSelection()
   })
+
+  // capture the prompt geometry right before home unmounts so the
+  // session route transition can expand from the prompt's position
+  onCleanup(() => captureRouteTransitionOrigin(promptBox))
 
   const bind = (r: PromptRef | undefined) => {
     setRef(r)
@@ -78,7 +85,7 @@ export function Home() {
           </pluginRuntime.Slot>
         </box>
         <box height={1} minHeight={0} flexShrink={1} />
-        <box width="100%" maxWidth={promptMaxWidth()} zIndex={1000} paddingTop={1} flexShrink={0}>
+        <box ref={promptBox} width="100%" maxWidth={promptMaxWidth()} zIndex={1000} paddingTop={1} flexShrink={0}>
           <pluginRuntime.Slot name="home_prompt" mode="replace" ref={bind}>
             <Prompt ref={bind} right={<pluginRuntime.Slot name="home_prompt_right" />} placeholders={placeholder} />
           </pluginRuntime.Slot>
